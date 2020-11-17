@@ -211,6 +211,16 @@ def fun(event):
     #Update the transformation window
     update_new(neg_img)
 
+def mouse_click(event, x, y,  
+                flags, param): 
+    global g_x, g_y  
+    
+    # to check if left mouse  
+    # button was clicked 
+    if event == cv2.EVENT_LBUTTONDBLCLK or event == cv2.EVENT_RBUTTONDBLCLK:
+        g_x = x 
+        g_y = y
+        print(x,y)
 
 ##---------------------------------------------------------------------------##
 def main():
@@ -267,6 +277,7 @@ def main():
     # Bind all the required keys to functions
     root.bind("<q>", quit_img)
     root.bind("<s>", save_img)
+    root.bind("<Button-1>", mouse_click)
     
 
     root.mainloop() # Start the GUI
