@@ -216,16 +216,29 @@ def main():
     root = Tk()
     root.title("Image Registration.")
     
-    # The original loaded images 
-    img1 = Label(image=None)
+    #setting up a tkinter canvas
+    img1 = Canvas(root, width=100, height=100)
+    img1.create_image(0, 0, image=None, anchor="nw")
     img1.pack(side="left", padx=10, pady=10)
-
-    img2 = Label(image=None)
+      
+    img2 = Canvas(root, width=100, height=100)
+    img2.create_image(0, 0, image=None, anchor="nw")
     img2.pack(side="left", padx=10, pady=10)
+    
+    new = Canvas(root, width=100, height=100)
+    img2.create_image(0, 0, image=None, anchor="nw")
+    img2.pack(side="right", padx=10, pady=10)
+    
+    # The original loaded images 
+    # img1 = Label(image=None)
+    # img1.pack(side="left", padx=10, pady=10)
+
+    # img2 = Canvas(image=None)
+    # img2.pack(side="left", padx=10, pady=10)
 
     # The new modifed image
-    new = Label(image=None)
-    new.pack(side="right", padx=10, pady=10)
+    # new = Label(image=None)
+    # new.pack(side="right", padx=10, pady=10)
     
     #mouseclick event
     img1.bind("<Button 1>",setpoint1)
