@@ -4,7 +4,7 @@ Spyder Editor
 
 This is a temporary script file.
 """
-from tkinter import Tk, filedialog, Frame, Label, Button, simpledialog, filedialog
+from tkinter import Tk, filedialog, Frame, Label, Canvas, Button, simpledialog, filedialog
 from PIL import Image, ImageTk
 from time import time
 from tkinter.messagebox import showinfo, askyesno
@@ -22,21 +22,17 @@ from fractions import Fraction
 img = False
 second_img = False
 
-#Flags for determining if the image is grayscal (default is true)
-img_gray = True
-img2_gray = True
-
 #To reload image 2 in the event of a type mismatch
 img2_path = ""
 ##-------Launching the program-----------------------------------------------##
 # For -h argument
 def get_args():
     parser = argparse.ArgumentParser(description='Image Registration v1.0')
-    parser.add_argument('--f', metavar='filename',
-                        help='optional name of file in root dir to be transformed')
-                    
+    parser.add_argument('-- ', default=" ",
+                        help='A Graphical User Interface with no arguments.')
     args = parser.parse_args()
     return(args)
+
 
 ##-------Functions to open/read an image file and rendering in UI------------##
 
@@ -85,16 +81,26 @@ def select_img1(event):
     # Prompt the user
     path = filedialog.askopenfilename(title="Please Select Image")
     # if there is a path and it is readable
-    if len(path) > 0 and cv2.haveImageReader(path):
-        color_img()
+    if len(path) > 0 and cv2.haveImageReader(path): 
         update_img1(path)
         img = True
-        if second_img:
-            correct_mismatch()
-            get_subsets()
     else:
         showinfo("Error", "No Image was found at path or it is not readable.")
 
+def select_img2(event):
+    global second_img
+
+    if img == False:
+        showinfo("Error", "Load Image 1 First")
+        return
+    # Prompt the user
+    path = filedialog.askopenfilename(title="Please Select Image 2")
+    # if there is a path and it is readable
+    if len(path) > 0 and cv2.haveImageReader(path):
+        update_img2(path)
+        second_img = True
+    else:
+        showinfo("Error", "No image was found at path or it is not readable.")
 
 
 #Exit the program
@@ -121,22 +127,7 @@ def save_img(event):
         name = name+".png"
     cv2.imwrite(name, new_img)
 
-#Determine if the image should be color or grayscale
-def color_img():
-    global img_gray, img2_gray
-    answer = askyesno("Question","Default is Grayscale image. Do you want to use a Color Image?")
-    if answer:
-        img_gray = False
-        img2_gray = False
-    else:
-        img_gray = True
-        img2_gray = True
 
-#If image 1 is changed to grayscale or color, convert image 2 to match image 1
-def correct_mismatch():
-    global img2_path
-    showinfo("Updating", "Updating Image 2 to match Image 1 format")
-    update_img2(img2_path)
 
 
 ##---------GUI update image formating ---------------------------------------##
@@ -145,9 +136,7 @@ def update_img1(path):
     global img1, image
     #Load the image
     image = opencv_img(path)
-    #Convert to grayscale if requested
-    if img_gray:
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+   
     #Convert and display
     disp_img = convert_img(image)
     img1.configure(image=disp_img)
@@ -159,23 +148,12 @@ def update_img2(path):
     #Load the image
     img2_path = path
     image2 = opencv_img(path)
-    #Convert to grayscale if requested
-    if img2_gray:
-        image2 = cv2.cvtColor(image2, cv2.COLOR_BGR2GRAY)
+   
     #Convert and display
     disp_img = convert_img(image2)
     img2.configure(image=disp_img)
     img2.image = disp_img
     return disp_img
-
-# Create subsets of images 1 & 2 of size the smaller of the two widths and two heights
-def get_subsets():
-    global image, image2, img1_subset, img2_subset
-    img1_subset = image[0:int(min(image.shape[0], image2.shape[0])),
-                        0:int(min(image.shape[1], image2.shape[1]))]
-
-    img2_subset = image2[0:int(min(image.shape[0], image2.shape[0])),
-                         0:int(min(image.shape[1], image2.shape[1]))]
 
 
 # A newly transformed image, new, is formatted for display
@@ -199,47 +177,58 @@ def is_image():
 ##---------Pixel Transformations---------------------------------------------##
 
 
-# Negative Transformation of image 1
-def fun(event):
-    global image
+# point1
+def setpoint1(event):
+    global image, x1, y1
     #Check that image 1 is loaded
     if not is_image():
         return
 
-    neg_img = image
+    x1 = event.x
+    y1 = event.y
+    print(x1, y1)
 
-    #Update the transformation window
-    update_new(neg_img)
-
-def mouse_click(event, x, y,  
-                flags, param): 
-    global g_x, g_y  
+    #put a dot at the chosen point
+    max_rad = max(image.shape[0], image.shape[1])
+    radius = int(max_rad * (1/10))
+    center = (x1, y1)
     
-    # to check if left mouse  
-    # button was clicked 
-    if event == cv2.EVENT_LBUTTONDBLCLK or event == cv2.EVENT_RBUTTONDBLCLK:
-        g_x = x 
-        g_y = y
-        print(x,y)
+    new_image = np.copy(image)
+    halo_filter = np.zeros((new_image.shape[0], new_image.shape[1], 3))
+    halo_filter[:,:,:] = 0.80
+    
+    dot = cv2.circle(halo_filter, center, radius, (1,1,1), -1)
+    new_image = np.uint8(new_image * dot)
+    update_new(new_image)
+   # img1.bind("<Button 1>",getextentx)
+   
 
 ##---------------------------------------------------------------------------##
 def main():
-    global root, img1,   new, image
+    global root, img1, img2, new, image, image2new, image
 
     #Get the command arguments
     get_args()
-   
+    if len(sys.argv) != 1:
+        print('Image Registration v1.0 is a GUI program without arguments')
+        sys.exit(0)
 
     root = Tk()
     root.title("Image Registration.")
-
-    # The original loaded image
+    
+    # The original loaded images 
     img1 = Label(image=None)
     img1.pack(side="left", padx=10, pady=10)
+
+    img2 = Label(image=None)
+    img2.pack(side="left", padx=10, pady=10)
 
     # The new modifed image
     new = Label(image=None)
     new.pack(side="right", padx=10, pady=10)
+    
+    #mouseclick event
+    img1.bind("<Button 1>",setpoint1)
 
     # Frame to display navigation buttons at bottom of window
     frame = Frame()
@@ -254,16 +243,15 @@ def main():
     btn_select_img1.grid(row = 0, column = 1)
     btn_select_img1.bind('<ButtonRelease-1>', select_img1)
 
-
-     # Button for log transformation of image
-    btn_log = Button(
-        master = frame,
-        text = "Fun",
-        underline = 0
+    btn_select_img2 = Button(
+        master=frame,
+        text="Select image 2",
+        underline=13
     )
-    btn_log.grid(row = 2, column = 0)
-    btn_log.bind('<ButtonRelease-1>', fun)
+    btn_select_img2.grid(row=14, column=1)
+    btn_select_img2.bind('<ButtonRelease-1>', select_img2)
 
+ 
   
     # Button for save_img image
     btn_save = Button(
@@ -277,7 +265,7 @@ def main():
     # Bind all the required keys to functions
     root.bind("<q>", quit_img)
     root.bind("<s>", save_img)
-    root.bind("<Button-1>", mouse_click)
+    
     
 
     root.mainloop() # Start the GUI
