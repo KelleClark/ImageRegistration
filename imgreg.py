@@ -285,13 +285,18 @@ def print_points(event):
 #https://opencv-python-tutroals.readthedocs.io/en/latest/py_tutorials
 #/py_feature2d/py_features_harris/py_features_harris.html
 def reg_automatic(event):
-    global image1, img
+    global image1, imj1, new
     
-    gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
+    #Requires two images
+    if not second_img:
+        showinfo("Error", "Image Registration require two images.  Load 2 images and try again")
+        return
+    
+    gray = cv2.cvtColor(image1,cv2.COLOR_BGR2GRAY)
     gray2 = np.float32(gray)
     dst = cv2.cornerHarris(gray2,2,3,0.04)
 
-    res = img.copy()
+    res = imj1.copy()
     res[dst>0.01*dst.max()]=[0,0,255]
     kp1 = np.argwhere(dst > 0.01 * dst.max())
     kp1 = kp1.astype("float32")
@@ -303,16 +308,14 @@ def reg_automatic(event):
     #img 2?
      
     #Convert and display
-    disp_img = convert_img(image1)
-    img2.image = disp_img
-    updated_img2 = img2.create_image(0, 0, image=disp_img, anchor="nw")
-    img2.config(height=image2.shape[0], width=image2.shape[1])
-    img2.itemconfig(updated_img2)
+    disp_img = convert_img(dcp1)
+    new.image = disp_img
+    updated_new = new.create_image(0, 0, image=disp_img, anchor="nw")
+    new.config(height=image2.shape[0], width=image2.shape[1])
+    new.itemconfig(updated_new)
         
     
-        
-
-   
+    
 ##---------------------------------------------------------------------------##
 def main():
     global root, img1, img2, new, image, image2, new
@@ -402,19 +405,20 @@ def main():
     btn_save.bind('<ButtonRelease-1>', reset)
     
     # Button for print points
-    btn_save = Button(
+    btn_reg_auto = Button(
         master = frame,
-        text = "Print Chosen Points",
+        text = "Align Automatically",
         underline = 0
     )
-    btn_save.grid(row = 15, column = 2)
-    btn_save.bind('<ButtonRelease-1>', print_points)
+    btn_reg_auto.grid(row = 15, column = 2)
+    btn_reg_auto.bind('<ButtonRelease-1>', reg_automatic)
 
     # Bind all the required keys to functions
     root.bind("<q>", quit_img)
     root.bind("<s>", save_img)
     root.bind("<r>", reset)
     root.bind("<e>", print_points)
+    root.bind("<a>", reg_automatic)
 
     
     
