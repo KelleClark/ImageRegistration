@@ -24,6 +24,13 @@ second_img = False
 
 #To reload image 2 in the event of a type mismatch
 img2_path = ""
+
+# keep the x and y coordinates of the points selected in both images
+g_x = []
+g_y = []
+g_x2 = []
+g_y2 = []
+
 ##-------Launching the program-----------------------------------------------##
 # For -h argument
 def get_args():
@@ -133,13 +140,13 @@ def save_img(event):
 ##---------GUI update image formating ---------------------------------------##
 # User given path to image, open and format image return disp_img
 def update_img1(path):
-    global img1, image
+    global img1, image, imj1
     #Load the image
     image = opencv_img(path)
    
     #Convert and display
     disp_img = convert_img(image)
-    #img1.configure(image=disp_img)
+    imj1 = disp_img
     img1.image = disp_img
     updated_img1 = img1.create_image(0, 0, image=disp_img, anchor="nw")
     img1.config(height=image.shape[0], width=image.shape[1])
@@ -147,14 +154,14 @@ def update_img1(path):
     return disp_img
 
 def update_img2(path):
-    global img2, image2, img2_path
+    global img2, image2, img2_path, imj2
     #Load the image
     img2_path = path
     image2 = opencv_img(path)
    
     #Convert and display
     disp_img = convert_img(image2)
-    #img2.configure(image=disp_img)
+    imj2 = disp_img
     img2.image = disp_img
     updated_img2 = img2.create_image(0, 0, image=disp_img, anchor="nw")
     img2.config(height=image2.shape[0], width=image2.shape[1])
@@ -167,7 +174,8 @@ def update_new(img):
     global new, new_img
     new_img = img
     disp_img = convert_img(img)
-    #new.configure(image=disp_img)
+    
+    #Convert and display
     new.image = disp_img
     updated_new = new.create_image(0, 0, image=disp_img, anchor="nw")
     new.config(height=new_img.shape[0], width=new_img.shape[1])
@@ -210,11 +218,104 @@ def setpoint1(event):
     new_image = np.uint8(new_image * dot)
     update_new(new_image)
    # img1.bind("<Button 1>",getextentx)
-   
 
+   
+#define the events for the mouse_click. 
+def ref_click(event):
+    global imj1, g_x, g_y
+    
+    g_x = []
+    g_y = []
+    
+    cv2.imshow('image', imj1)
+    cv2.setMouseCallback('image', get_points1)
+    
+def get_points1(x, y, flags, param): 
+    global g_x, g_y 
+    
+    #cap at 4 for testing
+    if len(g_x) < 4:
+        g_x.append(x) 
+        g_y.append(y)
+        print(x,y)
+        cv2.setMouseCallback('image', get_points1)
+    else:
+        print("Selected 4 points, press r to reset")
+        # close all the opened windows. 
+        cv2.destroyAllWindows()
+    
+        
+def other_click(event): 
+    global imj2, g_x2, g_y2 
+    
+    g_x2 = []
+    g_y2 = []
+    
+    cv2.imshow('image', imj2)
+    cv2.setMouseCallback('image', get_points2)
+    
+def get_points2(x, y, flags, param): 
+    global g_x2, g_y2 
+    
+    #cap at 4 for testing
+    if len(g_x2) < 4:
+        g_x2.append(x) 
+        g_y2.append(y)
+        print(x,y)
+        cv2.setMouseCallback('image', get_points2)
+    else:
+        print("Selected 4 points, press r to reset")
+        # close all the opened windows. 
+        cv2.destroyAllWindows()    
+    
+          
+def reset(event):
+    global g_x, g_y, g_x2, g_y2
+    g_x = []
+    g_y = []
+    g_x2 = []
+    g_y2 = []
+    
+def print_points(event):
+    global g_x, g_y, g_x2, g_y2
+    print(g_x,g_y)
+    print(g_x2,g_y2)
+
+#Partially from 
+#https://opencv-python-tutroals.readthedocs.io/en/latest/py_tutorials
+#/py_feature2d/py_features_harris/py_features_harris.html
+def reg_automatic(event):
+    global image1, img
+    
+    gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
+    gray2 = np.float32(gray)
+    dst = cv2.cornerHarris(gray2,2,3,0.04)
+
+    res = img.copy()
+    res[dst>0.01*dst.max()]=[0,0,255]
+    kp1 = np.argwhere(dst > 0.01 * dst.max())
+    kp1 = kp1.astype("float32")
+    kp1 = [cv2.KeyPoint(x[1], x[0], 4) for x in kp1]
+        
+    sift = cv2.SIFT_create()
+    dcp1 = sift.compute(gray, kp1)
+        
+    #img 2?
+     
+    #Convert and display
+    disp_img = convert_img(image1)
+    img2.image = disp_img
+    updated_img2 = img2.create_image(0, 0, image=disp_img, anchor="nw")
+    img2.config(height=image2.shape[0], width=image2.shape[1])
+    img2.itemconfig(updated_img2)
+        
+    
+        
+
+   
 ##---------------------------------------------------------------------------##
 def main():
-    global root, img1, img2, new, image, image2new, image
+    global root, img1, img2, new, image, image2, new
 
     #Get the command arguments
     get_args()
@@ -238,16 +339,6 @@ def main():
     new.create_image(0, 0, image=None, anchor="nw")
     new.pack(side="right", padx=10, pady=10)
     
-    # The original loaded images 
-    # img1 = Label(image=None)
-    # img1.pack(side="left", padx=10, pady=10)
-
-    # img2 = Canvas(image=None)
-    # img2.pack(side="left", padx=10, pady=10)
-
-    # The new modifed image
-    # new = Label(image=None)
-    # new.pack(side="right", padx=10, pady=10)
     
     #mouseclick event
     img1.bind("<Button 1>",setpoint1)
@@ -256,7 +347,7 @@ def main():
     frame = Frame()
     frame.pack()
 
-    # Button for select image
+    # Button for select image 1
     btn_select_img1 = Button(
         master = frame,
         text = "Select image 1",
@@ -265,6 +356,7 @@ def main():
     btn_select_img1.grid(row = 0, column = 1)
     btn_select_img1.bind('<ButtonRelease-1>', select_img1)
 
+     # Button for select image 2
     btn_select_img2 = Button(
         master=frame,
         text="Select image 2",
@@ -273,8 +365,24 @@ def main():
     btn_select_img2.grid(row=14, column=1)
     btn_select_img2.bind('<ButtonRelease-1>', select_img2)
 
- 
+    # Button for select points on image 1
+    btn_select_pts_img1 = Button(
+        master = frame,
+        text = "Select Points Image 1",
+        underline = 13
+    )
+    btn_select_pts_img1.grid(row = 0, column = 2)
+    btn_select_pts_img1.bind('<ButtonRelease-1>', ref_click )
   
+    # Button for select points on image 2
+    btn_select_pts_img2 = Button(
+        master = frame,
+        text = "Select Points Image 2",
+        underline = 13
+    )
+    btn_select_pts_img2.grid(row = 14, column = 2)
+    btn_select_pts_img2.bind('<ButtonRelease-1>', other_click )
+   
     # Button for save_img image
     btn_save = Button(
         master = frame,
@@ -283,10 +391,31 @@ def main():
     )
     btn_save.grid(row = 18, column = 1)
     btn_save.bind('<ButtonRelease-1>', save_img)
+    
+    # Button for reset
+    btn_save = Button(
+        master = frame,
+        text = "Reset Points",
+        underline = 0
+    )
+    btn_save.grid(row = 15, column = 1)
+    btn_save.bind('<ButtonRelease-1>', reset)
+    
+    # Button for print points
+    btn_save = Button(
+        master = frame,
+        text = "Print Chosen Points",
+        underline = 0
+    )
+    btn_save.grid(row = 15, column = 2)
+    btn_save.bind('<ButtonRelease-1>', print_points)
 
     # Bind all the required keys to functions
     root.bind("<q>", quit_img)
     root.bind("<s>", save_img)
+    root.bind("<r>", reset)
+    root.bind("<e>", print_points)
+
     
     
 
