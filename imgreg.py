@@ -139,8 +139,11 @@ def update_img1(path):
    
     #Convert and display
     disp_img = convert_img(image)
-    img1.configure(image=disp_img)
+    #img1.configure(image=disp_img)
     img1.image = disp_img
+    updated_img1 = img1.create_image(0, 0, image=disp_img, anchor="nw")
+    img1.config(height=image.shape[0], width=image.shape[1])
+    img1.itemconfig(updated_img1)
     return disp_img
 
 def update_img2(path):
@@ -151,8 +154,11 @@ def update_img2(path):
    
     #Convert and display
     disp_img = convert_img(image2)
-    img2.configure(image=disp_img)
+    #img2.configure(image=disp_img)
     img2.image = disp_img
+    updated_img2 = img2.create_image(0, 0, image=disp_img, anchor="nw")
+    img2.config(height=image2.shape[0], width=image2.shape[1])
+    img2.itemconfig(updated_img2)
     return disp_img
 
 
@@ -161,8 +167,11 @@ def update_new(img):
     global new, new_img
     new_img = img
     disp_img = convert_img(img)
-    new.configure(image=disp_img)
+    #new.configure(image=disp_img)
     new.image = disp_img
+    updated_new = new.create_image(0, 0, image=disp_img, anchor="nw")
+    new.config(height=new_img.shape[0], width=new_img.shape[1])
+    new.itemconfig(updated_new)
 
 
 # Check if the first image is loaded
@@ -226,8 +235,8 @@ def main():
     img2.pack(side="left", padx=10, pady=10)
     
     new = Canvas(root, width=100, height=100)
-    img2.create_image(0, 0, image=None, anchor="nw")
-    img2.pack(side="right", padx=10, pady=10)
+    new.create_image(0, 0, image=None, anchor="nw")
+    new.pack(side="right", padx=10, pady=10)
     
     # The original loaded images 
     # img1 = Label(image=None)
