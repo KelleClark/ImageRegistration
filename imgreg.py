@@ -294,7 +294,10 @@ def reg_automatic(event):
     updated_new = new.create_image(0, 0, image=disp_img, anchor="nw")
     new.config(height=image2.shape[0], width=image2.shape[1])
     new.itemconfig(updated_new)
-        
+ 
+def reg_manual(event):
+    global image, imj1, new, g_x, g_y, g_x2, g_y2
+      
     
     
 ##---------------------------------------------------------------------------##
@@ -347,14 +350,13 @@ def main():
         text="Select image 2",
         underline=13
     )
-    btn_select_img2.grid(row=14, column=1)
+    btn_select_img2.grid(row=2, column=1)
     btn_select_img2.bind('<ButtonRelease-1>', select_img2)
 
     # Button for select points on image 1
     btn_select_pts_img1 = Button(
         master = frame,
-        text = "Select Points Image 1",
-        underline = 13
+        text = "Select Points Image 1"
     )
     btn_select_pts_img1.grid(row = 0, column = 2)
     btn_select_pts_img1.bind('<ButtonRelease-1>', select_points1)
@@ -362,20 +364,12 @@ def main():
     # Button for select points on image 2
     btn_select_pts_img2 = Button(
         master = frame,
-        text = "Select Points Image 2",
-        underline = 13
+        text = "Select Points Image 2"
     )
-    btn_select_pts_img2.grid(row = 14, column = 2)
+    btn_select_pts_img2.grid(row = 2, column = 2)
     btn_select_pts_img2.bind('<ButtonRelease-1>',  select_points2 )
    
-    # Button for save_img image
-    btn_save = Button(
-        master = frame,
-        text = "Save",
-        underline = 0
-    )
-    btn_save.grid(row = 18, column = 1)
-    btn_save.bind('<ButtonRelease-1>', save_img)
+   
     
     # Button for reset
     btn_save = Button(
@@ -383,25 +377,57 @@ def main():
         text = "Reset Points",
         underline = 0
     )
-    btn_save.grid(row = 15, column = 1)
+    btn_save.grid(row = 3, column = 1)
     btn_save.bind('<ButtonRelease-1>', reset)
     
-    # Button for print points
+    # Button for Auto Align
     btn_reg_auto = Button(
         master = frame,
         text = "Align Automatically",
         underline = 0
     )
-    btn_reg_auto.grid(row = 15, column = 2)
+    btn_reg_auto.grid(row = 4, column = 1)
     btn_reg_auto.bind('<ButtonRelease-1>', reg_automatic)
+    
+    # Button for Manual Align
+    btn_reg_man = Button(
+        master = frame,
+        text = "Align Manually (pts chosen)"
+    )
+    btn_reg_man.grid(row = 4, column = 1)
+    btn_reg_man.bind('<ButtonRelease-1>', reg_manual)
+    
+    # Button for save_img image
+    btn_save = Button(
+        master = frame,
+        text = "Save",
+        underline = 0
+    )
+    btn_save.grid(row = 6, column = 2)
+    btn_save.bind('<ButtonRelease-1>', save_img)
+    
+    # Button for print points
+    btn_printpts = Button(
+        master = frame,
+        text = "Print Pts",
+        underline = 0
+    )
+    btn_save.grid(row = 5, column = 1)
+    btn_save.bind('<ButtonRelease-1>', print_points)
 
     # Bind all the required keys to functions
     root.bind("<q>", quit_img)
+    root.bind("<S>", save_img)
     root.bind("<s>", save_img)
+    root.bind("<R>", reset)
     root.bind("<r>", reset)
-    root.bind("<e>", print_points)
+    root.bind("<P>", print_points)
+    root.bind("<p>", print_points)
     root.bind("<a>", reg_automatic)
+    root.bind("<A>", reg_automatic)
 
+    
+   
     
     
 
