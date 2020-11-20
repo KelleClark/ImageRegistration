@@ -31,6 +31,9 @@ g_y = []
 g_x2 = []
 g_y2 = []
 
+select_pnt1 = False
+select_pnt2 = False
+
 ##-------Launching the program-----------------------------------------------##
 # For -h argument
 def get_args():
@@ -135,12 +138,10 @@ def save_img(event):
     cv2.imwrite(name, new_img)
 
 
-
-
 ##---------GUI update image formating ---------------------------------------##
 # User given path to image, open and format image return disp_img
 def update_img1(path):
-    global img1, image, imj1
+    global img1, image, imj1, updated_img1
     #Load the image
     image = opencv_img(path)
    
@@ -154,7 +155,7 @@ def update_img1(path):
     return disp_img
 
 def update_img2(path):
-    global img2, image2, img2_path, imj2
+    global img2, image2, img2_path, imj2, updated_img
     #Load the image
     img2_path = path
     image2 = opencv_img(path)
@@ -196,86 +197,66 @@ def is_image():
 
 # point1
 def setpoint1(event):
-    global image, x1, y1
+    global image, g_x, g_y, img1, select_pnt1
     #Check that image 1 is loaded
     if not is_image():
         return
 
-    x1 = event.x
-    y1 = event.y
-    print(x1, y1)
-
-    #put a dot at the chosen point
-    max_rad = max(image.shape[0], image.shape[1])
-    radius = int(max_rad * (1/10))
-    center = (x1, y1)
-    
-    new_image = np.copy(image)
-    halo_filter = np.zeros((new_image.shape[0], new_image.shape[1], 3))
-    halo_filter[:,:,:] = 0.80
-    
-    dot = cv2.circle(halo_filter, center, radius, (1,1,1), -1)
-    new_image = np.uint8(new_image * dot)
-    update_new(new_image)
-   # img1.bind("<Button 1>",getextentx)
-
-   
-#define the events for the mouse_click. 
-def ref_click(event):
-    global imj1, g_x, g_y
-    
-    g_x = []
-    g_y = []
-    
-    cv2.imshow('image', imj1)
-    cv2.setMouseCallback('image', get_points1)
-    
-def get_points1(x, y, flags, param): 
-    global g_x, g_y 
-    
-    #cap at 4 for testing
-    if len(g_x) < 4:
-        g_x.append(x) 
-        g_y.append(y)
-        print(x,y)
-        cv2.setMouseCallback('image', get_points1)
-    else:
-        print("Selected 4 points, press r to reset")
-        # close all the opened windows. 
-        cv2.destroyAllWindows()
-    
+    if select_pnt1:
+        print(select_pnt1)
+        x1 = event.x
+        y1 = event.y
+        print("pic 1:",x1, y1)
+        if len(g_x) < 4:
+            g_x.append(x1)
+            g_y.append(y1)
+            img1.create_oval(x1-10, y1-10, x1+10, y1+10, outline="red", 
+                             tags="point1")
+        else:
+            print("warning and don't save")
         
-def other_click(event): 
-    global imj2, g_x2, g_y2 
-    
-    g_x2 = []
-    g_y2 = []
-    
-    cv2.imshow('image', imj2)
-    cv2.setMouseCallback('image', get_points2)
-    
-def get_points2(x, y, flags, param): 
-    global g_x2, g_y2 
-    
-    #cap at 4 for testing
-    if len(g_x2) < 4:
-        g_x2.append(x) 
-        g_y2.append(y)
-        print(x,y)
-        cv2.setMouseCallback('image', get_points2)
-    else:
-        print("Selected 4 points, press r to reset")
-        # close all the opened windows. 
-        cv2.destroyAllWindows()    
-    
-          
+
+def select_points1(event):
+    global select_pnt1
+    print("Put a pop up box telling user what to do perhaps?")
+    select_pnt1 = True
+
+# point2
+def setpoint2(event):
+    global image, g_x2, g_y2, img2, select_pnt2
+    #Check that image 1 is loaded
+    if not is_image():
+        return
+
+    if select_pnt2:
+        print(select_pnt2)
+        x2 = event.x
+        y2 = event.y
+        print("pic 2:", x2, y2)
+        if len(g_x2) < 4:
+            g_x2.append(x2)
+            g_y2.append(y2)
+            img2.create_oval(x2-10, y2-10, x2+10, y2+10, outline="red",
+                             tags="point2")
+        else:
+            print("warning and don't save")
+
+def select_points2(event):
+    global select_pnt2
+    print("Put a pop up box telling user what to do perhaps?")
+    select_pnt2 = True
+
+# Reset the manual points that have been selected  
 def reset(event):
-    global g_x, g_y, g_x2, g_y2
+    global g_x, g_y, g_x2, g_y2, img1, updated_img1
     g_x = []
     g_y = []
     g_x2 = []
     g_y2 = []
+    img1.delete("point1")
+    img2.delete("point2")
     
+  
 def print_points(event):
     global g_x, g_y, g_x2, g_y2
     print(g_x,g_y)
@@ -345,6 +326,7 @@ def main():
     
     #mouseclick event
     img1.bind("<Button 1>",setpoint1)
+    img2.bind("<Button 1>",setpoint2)
 
     # Frame to display navigation buttons at bottom of window
     frame = Frame()
@@ -375,7 +357,7 @@ def main():
         underline = 13
     )
     btn_select_pts_img1.grid(row = 0, column = 2)
-    btn_select_pts_img1.bind('<ButtonRelease-1>', ref_click )
+    btn_select_pts_img1.bind('<ButtonRelease-1>', select_points1)
   
     # Button for select points on image 2
     btn_select_pts_img2 = Button(
@@ -384,7 +366,7 @@ def main():
         underline = 13
     )
     btn_select_pts_img2.grid(row = 14, column = 2)
-    btn_select_pts_img2.bind('<ButtonRelease-1>', other_click )
+    btn_select_pts_img2.bind('<ButtonRelease-1>',  select_points2 )
    
     # Button for save_img image
     btn_save = Button(
