@@ -335,10 +335,6 @@ def reg_manual(event):
         return
 
     srcQuad = np.float32([list(xy) for xy in zip(g_x, g_y)])
-    print(g_x)
-    print(g_y)
-    print(srcQuad)
-    print(type(srcQuad))
     dstQuad = np.float32([list(x2y2) for x2y2 in zip(g_x2, g_y2)])
     warp_mat = cv2.getPerspectiveTransform(srcQuad, dstQuad)
     res = cv2.warpPerspective(image, warp_mat, (image.shape[1], image.shape[0]))
