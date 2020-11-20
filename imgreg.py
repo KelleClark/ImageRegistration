@@ -293,7 +293,7 @@ def reg_automatic(event):
     gray2 = np.float32(gray)
     dst = cv2.cornerHarris(gray2,2,3,0.04)
 
-    res2 = image.copy()
+    res2 = image2.copy()
     res2[dst>0.01*dst.max()]=[0,0,255]
     kp2 = np.argwhere(dst > 0.01 * dst.max())
     kp2 = kp2.astype("float32")
@@ -306,17 +306,18 @@ def reg_automatic(event):
     matches = bf.match(dcp1, dcp2)
     matches.sort(key=lambda x: x.distance, reverse=False)
     
-    # First 10 lets say
-    good = matches[:20]
+    keep = int(len(matches) * .15)
+    good = matches[:keep]
+
     
     src_pts = np.int32([ kp1[m.queryIdx].pt for m in good ]).reshape(-1,1,2)
     dst_pts = np.int32([ kp2[m.trainIdx].pt for m in good ]).reshape(-1,1,2)
-    print(src_pts)
     
     M, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC)
     
     
     height, width, channels = image2.shape
+    print(height, width)
     im1_reg = cv2.warpPerspective(image, M, (width, height))
      
     #Convert and display
