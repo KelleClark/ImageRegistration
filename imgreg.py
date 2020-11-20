@@ -273,6 +273,8 @@ def reg_automatic(event):
         showinfo("Error", "Image Registration require two images.  Load 2 images and try again")
         return
     
+    # -- Image 1
+    
     gray = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
     gray2 = np.float32(gray)
     dst = cv2.cornerHarris(gray2,2,3,0.04)
@@ -284,12 +286,41 @@ def reg_automatic(event):
     kp1 = [cv2.KeyPoint(x[1], x[0], 4) for x in kp1]
         
     sift = cv2.SIFT_create()
-    dcp1 = sift.compute(gray, kp1)
+    dcp1 = sift.compute(gray, kp1)[1]
+    
+    # -- Image 2
+    gray = cv2.cvtColor(image2,cv2.COLOR_BGR2GRAY)
+    gray2 = np.float32(gray)
+    dst = cv2.cornerHarris(gray2,2,3,0.04)
+
+    res2 = image.copy()
+    res2[dst>0.01*dst.max()]=[0,0,255]
+    kp2 = np.argwhere(dst > 0.01 * dst.max())
+    kp2 = kp2.astype("float32")
+    kp2 = [cv2.KeyPoint(x[1], x[0], 4) for x in kp2]
         
-    #img 2?
+    dcp2 = sift.compute(gray, kp2)[1]
+
+    # -- Matching
+    bf = cv2.BFMatcher(cv2.NORM_L2, crossCheck=True)
+    matches = bf.match(dcp1, dcp2)
+    matches.sort(key=lambda x: x.distance, reverse=False)
+    
+    # First 10 lets say
+    good = matches[:20]
+    
+    src_pts = np.int32([ kp1[m.queryIdx].pt for m in good ]).reshape(-1,1,2)
+    dst_pts = np.int32([ kp2[m.trainIdx].pt for m in good ]).reshape(-1,1,2)
+    print(src_pts)
+    
+    M, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC)
+    
+    
+    height, width, channels = image2.shape
+    im1_reg = cv2.warpPerspective(image, M, (width, height))
      
     #Convert and display
-    disp_img = convert_img(res)
+    disp_img = convert_img(im1_reg)
     new.image = disp_img
     updated_new = new.create_image(0, 0, image=disp_img, anchor="nw")
     new.config(height=image2.shape[0], width=image2.shape[1])
