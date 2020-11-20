@@ -513,8 +513,8 @@ def main():
         text = "Print Pts",
         underline = 0
     )
-    btn_save.grid(row = 5, column = 1)
-    btn_save.bind('<ButtonRelease-1>', print_points)
+    btn_printpts.grid(row = 5, column = 1)
+    btn_printpts.bind('<ButtonRelease-1>', print_points)
 
     # Bind all the required keys to functions
     root.bind("<q>", quit_img)
