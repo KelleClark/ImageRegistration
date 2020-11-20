@@ -266,18 +266,18 @@ def print_points(event):
 #https://opencv-python-tutroals.readthedocs.io/en/latest/py_tutorials
 #/py_feature2d/py_features_harris/py_features_harris.html
 def reg_automatic(event):
-    global image1, imj1, new
+    global image, imj1, new
     
     #Requires two images
     if not second_img:
         showinfo("Error", "Image Registration require two images.  Load 2 images and try again")
         return
     
-    gray = cv2.cvtColor(image1,cv2.COLOR_BGR2GRAY)
+    gray = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
     gray2 = np.float32(gray)
     dst = cv2.cornerHarris(gray2,2,3,0.04)
 
-    res = imj1.copy()
+    res = image.copy()
     res[dst>0.01*dst.max()]=[0,0,255]
     kp1 = np.argwhere(dst > 0.01 * dst.max())
     kp1 = kp1.astype("float32")
@@ -289,7 +289,7 @@ def reg_automatic(event):
     #img 2?
      
     #Convert and display
-    disp_img = convert_img(dcp1)
+    disp_img = convert_img(res)
     new.image = disp_img
     updated_new = new.create_image(0, 0, image=disp_img, anchor="nw")
     new.config(height=image2.shape[0], width=image2.shape[1])
