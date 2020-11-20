@@ -18,21 +18,23 @@ import os
 import sys
 from fractions import Fraction
 
-# Flag for determining if images are loaded
+# flag for determining if images are loaded
 img = False
 second_img = False
 
-#To reload image 2 in the event of a type mismatch
+# flags to indicate state, collection of points
+select_pnt1 = False
+select_pnt2 = False
+
+# reload image 2 in the event of a type mismatch
 img2_path = ""
 
-# keep the x and y coordinates of the points selected in both images
+# to keep x and y coordinates of the points selected in images
 g_x = []
 g_y = []
 g_x2 = []
 g_y2 = []
 
-select_pnt1 = False
-select_pnt2 = False
 
 ##-------Launching the program-----------------------------------------------##
 # For -h argument
@@ -56,13 +58,17 @@ def opencv_img(path):
     # 1
     # window row count / image row count
     # window column count / image column count
-    scale = min(1, min(defaultrows / image.shape[0], defaultcolumn / image.shape[1]))
+    scale = min(1, min(defaultrows / image.shape[0],
+                       defaultcolumn / image.shape[1]))
 
-    # Set triangle corners used for affine transformation to top left, top right, and bottom left corners of image
-    srcTri = np.array([[0, 0], [image.shape[1] - 1, 0], [0, image.shape[0] - 1]]).astype(np.float32)
+    # Set triangle corners used for affine transformation to top left, top right,
+    # and bottom left corners of image
+    srcTri = np.array([[0, 0], [image.shape[1] - 1, 0], 
+                       [0, image.shape[0] - 1]]).astype(np.float32)
 
     # Set location of top right and bottom left corners of resized image
-    dstTri = np.array( [[0, 0], [int(image.shape[1] * scale), 0], [0, int(image.shape[0] * scale)]] ).astype(np.float32)
+    dstTri = np.array( [[0, 0], [int(image.shape[1] * scale), 0],
+                        [0, int(image.shape[0] * scale)]] ).astype(np.float32)
 
     # Perform affine transformation to resize image
     warp_mat = cv2.getAffineTransform(srcTri, dstTri)
@@ -73,10 +79,11 @@ def opencv_img(path):
     return(image)
 
 
-# Convert it to ImageTK
+# Convert image to ImageTK
 # necessary to use cvtColor taking from BGR to expected RGB color
 def convert_img(image):
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    
     # To proper format for tk
     im = Image.fromarray(image)
     imgtk = ImageTk.PhotoImage(image=im)
@@ -85,40 +92,42 @@ def convert_img(image):
 
 ##----------User Controls for the UI-----------------------------------------##
 
-# Select the image to load
+# Select the image to align
 def select_img1(event):
     global img, second_img
-    # Prompt the user
+   
+    # Prompt user
     path = filedialog.askopenfilename(title="Please Select Image")
+    
     # if there is a path and it is readable
     if len(path) > 0 and cv2.haveImageReader(path): 
         update_img1(path)
         img = True
+        print("Image to be aligned is :"+path)
     else:
         showinfo("Error", "No Image was found at path or it is not readable.")
 
+# Select the image used to align
 def select_img2(event):
     global second_img
 
-    if img == False:
-        showinfo("Error", "Load Image 1 First")
-        return
     # Prompt the user
     path = filedialog.askopenfilename(title="Please Select Image 2")
     # if there is a path and it is readable
     if len(path) > 0 and cv2.haveImageReader(path):
         update_img2(path)
         second_img = True
+        print("\nImage used in the alignment of Image 1"+path)
     else:
         showinfo("Error", "No image was found at path or it is not readable.")
 
 
-#Exit the program
+# To exit the program
 def quit_img(event):
     root.destroy() #Kill the display
     sys.exit(0)
 
-# Save the image to the main given path appending the name of any transformation
+# To save the image to the main given path appending the name of any transformation
 def save_img(event):
 
     #Check an image is loaded
@@ -139,30 +148,31 @@ def save_img(event):
 
 
 ##---------GUI update image formating ---------------------------------------##
-# User given path to image, open and format image return disp_img
+# User given path to image, open, format image return disp_img into img1 canvas
 def update_img1(path):
-    global img1, image, imj1, updated_img1
+    global img1, image, updated_img1
+    
     #Load the image
     image = opencv_img(path)
    
     #Convert and display
     disp_img = convert_img(image)
-    imj1 = disp_img
     img1.image = disp_img
     updated_img1 = img1.create_image(0, 0, image=disp_img, anchor="nw")
     img1.config(height=image.shape[0], width=image.shape[1])
     img1.itemconfig(updated_img1)
     return disp_img
 
+# User given path to image, open, format image return disp_img into img2 canvas
 def update_img2(path):
-    global img2, image2, img2_path, imj2, updated_img
+    global img2, image2, img2_path, updated_img
+    
     #Load the image
     img2_path = path
     image2 = opencv_img(path)
    
     #Convert and display
     disp_img = convert_img(image2)
-    imj2 = disp_img
     img2.image = disp_img
     updated_img2 = img2.create_image(0, 0, image=disp_img, anchor="nw")
     img2.config(height=image2.shape[0], width=image2.shape[1])
@@ -173,31 +183,58 @@ def update_img2(path):
 # A newly transformed image, new, is formatted for display
 def update_new(img):
     global new, new_img
+    
+    #update and format new_img
     new_img = img
     disp_img = convert_img(img)
+    new.image = disp_img
     
     #Convert and display
-    new.image = disp_img
     updated_new = new.create_image(0, 0, image=disp_img, anchor="nw")
     new.config(height=new_img.shape[0], width=new_img.shape[1])
     new.itemconfig(updated_new)
 
 
 # Check if the first image is loaded
+def are_images():
+    global img, second_img
+     
+    #Check that images are loaded
+    if not img:
+        if not second_img:
+            showinfo("Error", "Images have not been selected.")
+            return False
+        else:
+            showinfo("Error", "Image 1 has not been selected.")
+            return False
+    elif not second_img:
+        showinfo("Error", "Image 2 has not been selected.")
+        return False
+    else:
+        return True
+
 def is_image():
     global img
-    #Check that image 1 is loaded
+
     if not img:
-        showinfo("Error", "Image 1 has not been selected. Please select image 1.")
+        showinfo("Error", "Image 1 has not been selected.")
         return False
     return True
 
+def is_image2():
+    global second_img
+ 
+    if not img:
+        showinfo("Error", "Image 2 has not been selected.")
+        return False
+    return True
+    
 ##---------Pixel Transformations---------------------------------------------##
-
 
 # point1
 def setpoint1(event):
     global image, g_x, g_y, img1, select_pnt1
+    
     #Check that image 1 is loaded
     if not is_image():
         return
@@ -218,14 +255,20 @@ def setpoint1(event):
 
 def select_points1(event):
     global select_pnt1
-    print("Put a pop up box telling user what to do perhaps?")
-    select_pnt1 = True
+    
+    if not is_image():
+        return False
+    else:
+        showinfo("To Begin", 
+                 "Use mouse to click at least 4 pts in Image 1 that you wish to use.")
+        select_pnt1 = True
 
 # point2
 def setpoint2(event):
     global image, g_x2, g_y2, img2, select_pnt2
-    #Check that image 1 is loaded
-    if not is_image():
+   
+    #Check that image 2 is loaded
+    if not is_image2():
         return
 
     if select_pnt2:
@@ -243,8 +286,13 @@ def setpoint2(event):
 
 def select_points2(event):
     global select_pnt2
-    print("Put a pop up box telling user what to do perhaps?")
-    select_pnt2 = True
+    
+    if not is_image2():
+        return False
+    else: 
+        showinfo("To Begin",
+                 "Use mouse to click at least 4 points in Image 2 that you wish to use.")
+        select_pnt2 = True
 
 # Reset the manual points that have been selected  
 def reset(event):
@@ -269,8 +317,7 @@ def reg_automatic(event):
     global image, imj1, new
     
     #Requires two images
-    if not second_img:
-        showinfo("Error", "Image Registration require two images.  Load 2 images and try again")
+    if not are_images():
         return
     
     # -- Image 1
@@ -331,8 +378,7 @@ def reg_manual(event):
     global image, imj1, new, g_x, g_y, g_x2, g_y2
       
      #Requires two images
-    if not second_img:
-        showinfo("Error", "Image Registration require two images.  Load 2 images and try again")
+    if not are_images():
         return
     
     gray = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
