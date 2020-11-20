@@ -298,7 +298,32 @@ def reg_automatic(event):
 def reg_manual(event):
     global image, imj1, new, g_x, g_y, g_x2, g_y2
       
+     #Requires two images
+    if not second_img:
+        showinfo("Error", "Image Registration require two images.  Load 2 images and try again")
+        return
     
+    gray = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
+    gray2 = np.float32(gray)
+    dst = cv2.cornerHarris(gray2,2,3,0.04)
+
+    res = image.copy()
+    res[dst>0.01*dst.max()]=[0,0,255]
+    kp1 = np.argwhere(dst > 0.01 * dst.max())
+    kp1 = kp1.astype("float32")
+    kp1 = [cv2.KeyPoint(x[1], x[0], 4) for x in kp1]
+        
+    sift = cv2.SIFT_create()
+    dcp1 = sift.compute(gray, kp1)
+        
+    #img 2?
+     
+    #Convert and display
+    disp_img = convert_img(res)
+    new.image = disp_img
+    updated_new = new.create_image(0, 0, image=disp_img, anchor="nw")
+    new.config(height=image2.shape[0], width=image2.shape[1])
+    new.itemconfig(updated_new)
     
 ##---------------------------------------------------------------------------##
 def main():
@@ -368,9 +393,7 @@ def main():
     )
     btn_select_pts_img2.grid(row = 2, column = 2)
     btn_select_pts_img2.bind('<ButtonRelease-1>',  select_points2 )
-   
-   
-    
+     
     # Button for reset
     btn_save = Button(
         master = frame,
@@ -386,13 +409,13 @@ def main():
         text = "Align Automatically",
         underline = 0
     )
-    btn_reg_auto.grid(row = 4, column = 1)
+    btn_reg_auto.grid(row = 4, column = 2)
     btn_reg_auto.bind('<ButtonRelease-1>', reg_automatic)
     
     # Button for Manual Align
     btn_reg_man = Button(
         master = frame,
-        text = "Align Manually (pts chosen)"
+        text = "Align Manually"
     )
     btn_reg_man.grid(row = 4, column = 1)
     btn_reg_man.bind('<ButtonRelease-1>', reg_manual)
