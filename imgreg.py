@@ -21,6 +21,7 @@ from fractions import Fraction
 # flag for determining if images are loaded
 img = False
 second_img = False
+new_image = False
 
 # flags to indicate state, collection of points
 select_pnt1 = False
@@ -127,13 +128,13 @@ def quit_img(event):
     root.destroy() #Kill the display
     sys.exit(0)
 
-# To save the image to the main given path appending the name of any transformation
+# To save the image to the main given path appending the name of aligned
 def save_img(event):
-
+    global new
+    
     #Check an image is loaded
-    if not is_image():
+    if not is_new():
         return
-
     name = filedialog.asksaveasfilename(confirmoverwrite=True)
 
     # If no name or an invalid name is given, cancel
@@ -144,13 +145,16 @@ def save_img(event):
     #Default file type if none is given
     if "." not in name:
         name = name+".png"
-    cv2.imwrite(name, new_img)
+    cv2.imwrite(name, new.image)
 
 
 ##---------GUI update image formating ---------------------------------------##
 # User given path to image, open, format image return disp_img into img1 canvas
 def update_img1(path):
     global img1, image, updated_img1
+    
+    # reset the points
+    resetpts()
     
     #Load the image
     image = opencv_img(path)
@@ -163,9 +167,24 @@ def update_img1(path):
     img1.itemconfig(updated_img1)
     return disp_img
 
+# The auto generated points on image 1 are displayed
+def update_img1auto(img):
+    global img1, image
+   
+    #Convert and display
+    disp_img = convert_img(img)
+    img1.image = disp_img
+    updated_img1 = img1.create_image(0, 0, image=disp_img, anchor="nw")
+    img1.config(height=image.shape[0], width=image.shape[1])
+    img1.itemconfig(updated_img1)
+   
+
 # User given path to image, open, format image return disp_img into img2 canvas
 def update_img2(path):
     global img2, image2, img2_path, updated_img
+    
+    # reset the points
+    resetpts()
     
     #Load the image
     img2_path = path
@@ -182,17 +201,18 @@ def update_img2(path):
 
 # A newly transformed image, new, is formatted for display
 def update_new(img):
-    global new, new_img
-    
-    #update and format new_img
-    new_img = img
-    disp_img = convert_img(img)
-    new.image = disp_img
+    global new, new_image, image2
+
     
     #Convert and display
+    disp_img = convert_img(img)
+    new.image = disp_img
     updated_new = new.create_image(0, 0, image=disp_img, anchor="nw")
-    new.config(height=new_img.shape[0], width=new_img.shape[1])
+    new.config(height=image2.shape[0], width=image2.shape[1])
     new.itemconfig(updated_new)
+   
+    #set the flag
+    new_image = True
 
 
 # Check if images are loaded, required for registration
@@ -231,6 +251,15 @@ def is_image2():
         return False
     return True
     
+# Check if there is a new image, required for save
+def is_new():
+    global new_image
+ 
+    if not new_image:
+        showinfo("Error", "There is no new image currently")
+        return False
+    return True
+
 ##---------Pixel Transformations---------------------------------------------##
 
 # when select points image 1 button pressed, starts collecting points
@@ -264,7 +293,7 @@ def select_points1(event):
         return False
     else:
         showinfo("To Begin", 
-                 "Use mouse to click at least 4 pts in Image 1 that you wish to use.")
+                 "Use mouse to click on 4 pts in Image 1 that you wish to use.")
         select_pnt1 = True
 
 # when select points image 2 button pressed, starts collecting points
@@ -303,6 +332,10 @@ def select_points2(event):
 
 # Reset the manual points that have been selected  
 def reset(event):
+    resetpts()
+    
+    
+def resetpts():    
     global g_x, g_y, g_x2, g_y2, img1, updated_img1
     g_x = []
     g_y = []
@@ -310,8 +343,7 @@ def reset(event):
     g_y2 = []
     img1.delete("point1")
     img2.delete("point2")
-    
-  
+      
 def print_points(event):
     global g_x, g_y, g_x2, g_y2
     print(g_x,g_y)
@@ -375,11 +407,21 @@ def reg_automatic(event):
     im1_reg = cv2.warpPerspective(image, M, (width, height))
      
     #Convert and display
-    disp_img = convert_img(im1_reg)
-    new.image = disp_img
-    updated_new = new.create_image(0, 0, image=disp_img, anchor="nw")
-    new.config(height=image2.shape[0], width=image2.shape[1])
-    new.itemconfig(updated_new)
+    update_new(im1_reg)
+    # disp_img = convert_img(im1_reg)
+    # new.image = disp_img
+    # updated_new = new.create_image(0, 0, image=disp_img, anchor="nw")
+    # new.config(height=image2.shape[0], width=image2.shape[1])
+    # new.itemconfig(updated_new)
+    
+    #Convert and display
+    update_img1auto(res)
+    # disp_img = convert_img(res)
+    # new.image = disp_img
+    # updated_new = new.create_image(0, 0, image=disp_img, anchor="nw")
+    # new.config(height=image2.shape[0], width=image2.shape[1])
+    # new.itemconfig(updated_new)
+   
  
 def reg_manual(event):
     global image, imj1, new, g_x, g_y, g_x2, g_y2
@@ -387,6 +429,11 @@ def reg_manual(event):
     #Requires two images
     if not are_images():
         return
+    if len(g_x)<4:
+        showinfo("Alert", "You need to select 4 points on Image 1")
+        return
+    if len(g_x2)< 4:
+        showinfo("Alert", "You need to select 4 points on Image 2")
     
     srcQuad = np.float32([list(xy) for xy in zip(g_x, g_y)])
     dstQuad = np.float32([list(x2y2) for x2y2 in zip(g_x2, g_y2)])
@@ -409,11 +456,12 @@ def reg_manual(event):
         
      
     #Convert and display
-    disp_img = convert_img(res)
-    new.image = disp_img
-    updated_new = new.create_image(0, 0, image=disp_img, anchor="nw")
-    new.config(height=image2.shape[0], width=image2.shape[1])
-    new.itemconfig(updated_new)
+    update_new(res)
+    # disp_img = convert_img(res)
+    # new.image = disp_img
+    # updated_new = new.create_image(0, 0, image=disp_img, anchor="nw")
+    # new.config(height=image2.shape[0], width=image2.shape[1])
+    # new.itemconfig(updated_new)
    
     
     
