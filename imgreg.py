@@ -130,7 +130,7 @@ def quit_img(event):
 
 # To save the image to the main given path appending the name of aligned
 def save_img(event):
-    global new
+    global new, image_to_save
     
     #Check an image is loaded
     if not is_new():
@@ -145,7 +145,7 @@ def save_img(event):
     #Default file type if none is given
     if "." not in name:
         name = name+".png"
-    cv2.imwrite(name, new.image)
+    cv2.imwrite(name, image_to_save)
 
 
 ##---------GUI update image formating ---------------------------------------##
@@ -201,7 +201,9 @@ def update_img2(path):
 
 # A newly transformed image, new, is formatted for display
 def update_new(img):
-    global new, new_image, image2
+    global new, new_image, image2, image_to_save
+
+    image_to_save = img
 
     
     #Convert and display
