@@ -64,7 +64,7 @@ def opencv_img(path):
 
     # Set triangle corners used for affine transformation to top left, top right,
     # and bottom left corners of image
-    srcTri = np.array([[0, 0], [image.shape[1] - 1, 0], 
+    srcTri = np.array([[0, 0], [image.shape[1] - 1, 0],
                        [0, image.shape[0] - 1]]).astype(np.float32)
 
     # Set location of top right and bottom left corners of resized image
@@ -84,7 +84,7 @@ def opencv_img(path):
 # necessary to use cvtColor taking from BGR to expected RGB color
 def convert_img(image):
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-    
+
     # To proper format for tk
     im = Image.fromarray(image)
     imgtk = ImageTk.PhotoImage(image=im)
@@ -96,12 +96,12 @@ def convert_img(image):
 # Select the image to align
 def select_img1(event):
     global img, second_img
-   
+
     # Prompt user
     path = filedialog.askopenfilename(title="Please Select Image")
-    
+
     # if there is a path and it is readable
-    if len(path) > 0 and cv2.haveImageReader(path): 
+    if len(path) > 0 and cv2.haveImageReader(path):
         update_img1(path)
         img = True
         print("Image to be aligned is :"+path)
@@ -131,7 +131,7 @@ def quit_img(event):
 # To save the image to the main given path appending the name of aligned
 def save_img(event):
     global new, image_to_save
-    
+
     #Check an image is loaded
     if not is_new():
         return
@@ -150,54 +150,57 @@ def save_img(event):
 
 ##---------GUI update image formating ---------------------------------------##
 # User given path to image, open, format image return disp_img into img1 canvas
+
+def update_img(disp_img, loc):
+    loc.image = disp_img
+    updated_img1 = loc.create_image(0, 0, image=disp_img, anchor="nw")
+    loc.config(height=image.shape[0], width=image.shape[1])
+    loc.itemconfig(updated_img1)
+
 def update_img1(path):
     global img1, image, updated_img1
-    
+
     # reset the points
     resetpts()
-    
+
     #Load the image
     image = opencv_img(path)
-   
+
     #Convert and display
     disp_img = convert_img(image)
-    img1.image = disp_img
-    updated_img1 = img1.create_image(0, 0, image=disp_img, anchor="nw")
-    img1.config(height=image.shape[0], width=image.shape[1])
-    img1.itemconfig(updated_img1)
+    update_img(disp_img, img1)
     return disp_img
 
 # The auto generated points on image 1 are displayed
 def update_img1auto(img):
     global img1, image
-   
+
     #Convert and display
-    disp_img = convert_img(img)
-    img1.image = disp_img
-    updated_img1 = img1.create_image(0, 0, image=disp_img, anchor="nw")
-    img1.config(height=image.shape[0], width=image.shape[1])
-    img1.itemconfig(updated_img1)
-   
+    update_img(convert_img(img), img1)
+
 
 # User given path to image, open, format image return disp_img into img2 canvas
 def update_img2(path):
     global img2, image2, img2_path, updated_img
-    
+
     # reset the points
     resetpts()
-    
+
     #Load the image
     img2_path = path
     image2 = opencv_img(path)
-   
+
     #Convert and display
     disp_img = convert_img(image2)
-    img2.image = disp_img
-    updated_img2 = img2.create_image(0, 0, image=disp_img, anchor="nw")
-    img2.config(height=image2.shape[0], width=image2.shape[1])
-    img2.itemconfig(updated_img2)
+    update_img(disp_img, img2)
     return disp_img
 
+# The auto generated points on image 2 are displayed
+def update_img2auto(img):
+    global img2, image
+
+    #Convert and display
+    update_img(convert_img(img), img2)
 
 # A newly transformed image, new, is formatted for display
 def update_new(img):
@@ -205,14 +208,9 @@ def update_new(img):
 
     image_to_save = img
 
-    
+
     #Convert and display
-    disp_img = convert_img(img)
-    new.image = disp_img
-    updated_new = new.create_image(0, 0, image=disp_img, anchor="nw")
-    new.config(height=image2.shape[0], width=image2.shape[1])
-    new.itemconfig(updated_new)
-   
+    update_img(convert_img(img), new)
     #set the flag
     new_image = True
 
@@ -220,7 +218,7 @@ def update_new(img):
 # Check if images are loaded, required for registration
 def are_images():
     global img, second_img
-     
+
     #Check that images are loaded
     if not img:
         if not second_img:
@@ -247,16 +245,16 @@ def is_image():
 # Check if image 2 is loaded, required for select points image 2
 def is_image2():
     global second_img
- 
+
     if not img:
         showinfo("Error", "Image 2 has not been selected.")
         return False
     return True
-    
+
 # Check if there is a new image, required for save
 def is_new():
     global new_image
- 
+
     if not new_image:
         showinfo("Error", "There is no new image currently")
         return False
@@ -268,33 +266,33 @@ def is_new():
 # from mouse clicks on img1
 def setpoint1(event):
     global image, g_x, g_y, img1, select_pnt1
-    
+
     #Check that image 1 is loaded
     if not is_image():
         return
 
+
     if select_pnt1:
-        print(select_pnt1)
         x1 = event.x
         y1 = event.y
-        print("pic 1:",x1, y1)
         if len(g_x) < 4:
             g_x.append(x1)
             g_y.append(y1)
-            img1.create_oval(x1-5, y1-5, x1+5, y1+5, outline="red", 
+            img1.create_oval(x1-5, y1-5, x1+5, y1+5, outline="red",
                              tags="point1")
         else:
             showinfo("Alert", "Four points have been set. Press Reset to begin again.")
-        
+
 # When button for select points image 1 is pressed, instructions given and
 # flag set to receive mouse clicks on img1
 def select_points1(event):
-    global select_pnt1
-    
+    global select_pnt1, image, img1
+
     if not is_image():
         return False
     else:
-        showinfo("To Begin", 
+        update_img(convert_img(image), img1)
+        showinfo("To Begin",
                  "Use mouse to click on 4 pts in Image 1 that you wish to use.")
         select_pnt1 = True
 
@@ -302,16 +300,14 @@ def select_points1(event):
 # from mouse clicks on img2
 def setpoint2(event):
     global image, g_x2, g_y2, img2, select_pnt2
-   
+
     #Check that image 2 is loaded
     if not is_image2():
         return
 
     if select_pnt2:
-        print(select_pnt2)
         x2 = event.x
         y2 = event.y
-        print("pic 2:", x2, y2)
         if len(g_x2) < 4:
             g_x2.append(x2)
             g_y2.append(y2)
@@ -323,111 +319,99 @@ def setpoint2(event):
 # When button for select points image 2 is pressed, instructions given and
 # flag set to receive mouse clicks on img2
 def select_points2(event):
-    global select_pnt2
-    
+    global select_pnt2, image2, img2
+
     if not is_image2():
         return False
-    else: 
+    else:
+        update_img(convert_img(image2), img2)
         showinfo("To Begin",
                  "Use mouse to click on 4 points in Image 2 that you wish to use.")
         select_pnt2 = True
 
-# Reset the manual points that have been selected  
+# Reset the manual points that have been selected
 def reset(event):
     resetpts()
-    
-    
-def resetpts():    
-    global g_x, g_y, g_x2, g_y2, img1, updated_img1
-    g_x = []
-    g_y = []
-    g_x2 = []
-    g_y2 = []
-    img1.delete("point1")
-    img2.delete("point2")
-      
+
+# Reset the chosen points
+def resetpts():
+    global g_x, g_y, g_x2, g_y2, img1, img2, image, image2
+    if len(g_x) > 1 or len(g_x2) > 1:
+        g_x = []
+        g_y = []
+        g_x2 = []
+        g_y2 = []
+        img1.delete("point1")
+        img2.delete("point2")
+    if new_image:
+        update_img(convert_img(image), img1)
+        update_img(convert_img(image2), img2)
+
+# Use harris corner detection to get keypoints
+def get_corners(img):
+    gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
+    gray2 = np.float32(gray)
+    dst = cv2.cornerHarris(gray2,2,3,0.04)
+
+    res = img.copy()
+    res[dst>0.01*dst.max()]=[0,0,255]
+
+    kp = np.argwhere(dst > 0.01 * dst.max())
+    kp = kp.astype("float32")
+    kp = [cv2.KeyPoint(x[1], x[0], 4) for x in kp]
+    return (gray, kp, res)
+
+# Match the points across both images
+def get_matches(decp1, decp2):
+    bf = cv2.BFMatcher(cv2.NORM_L2, crossCheck=True)
+    matches = bf.match(decp1, decp2)
+    matches.sort(key=lambda x: x.distance, reverse=False)
+    return matches
+
+# Print the current manually selected points
 def print_points(event):
     global g_x, g_y, g_x2, g_y2
     print(g_x,g_y)
     print(g_x2,g_y2)
 
-#Partially from 
+#Partially from
 #https://opencv-python-tutroals.readthedocs.io/en/latest/py_tutorials
 #/py_feature2d/py_features_harris/py_features_harris.html
 def reg_automatic(event):
     global image, imj1, new
-    
+
     #Requires two images
     if not are_images():
         return
-    
-    # -- Image 1
-    
-    gray = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
-    gray2 = np.float32(gray)
-    dst = cv2.cornerHarris(gray2,2,3,0.04)
 
-    res = image.copy()
-    res[dst>0.01*dst.max()]=[0,0,255]
-    kp1 = np.argwhere(dst > 0.01 * dst.max())
-    kp1 = kp1.astype("float32")
-    kp1 = [cv2.KeyPoint(x[1], x[0], 4) for x in kp1]
-        
+    # -- Image 1
+    gray, kp1, res = get_corners(image)
     sift = cv2.SIFT_create()
     dcp1 = sift.compute(gray, kp1)[1]
-    
     # -- Image 2
-    gray = cv2.cvtColor(image2,cv2.COLOR_BGR2GRAY)
-    gray2 = np.float32(gray)
-    dst = cv2.cornerHarris(gray2,2,3,0.04)
-
-    res2 = image2.copy()
-    res2[dst>0.01*dst.max()]=[0,0,255]
-    kp2 = np.argwhere(dst > 0.01 * dst.max())
-    kp2 = kp2.astype("float32")
-    kp2 = [cv2.KeyPoint(x[1], x[0], 4) for x in kp2]
-        
-    dcp2 = sift.compute(gray, kp2)[1]
-
+    gray2, kp2, res2 = get_corners(image2)
+    dcp2 = sift.compute(gray2, kp2)[1]
     # -- Matching
-    bf = cv2.BFMatcher(cv2.NORM_L2, crossCheck=True)
-    matches = bf.match(dcp1, dcp2)
-    matches.sort(key=lambda x: x.distance, reverse=False)
-    
-    keep = int(len(matches) * .15)
-    good = matches[:keep]
+    matches = get_matches(dcp1, dcp2)
+    src_pts = np.int32([ kp1[m.queryIdx].pt for m in matches]).reshape(-1,1,2)
+    dst_pts = np.int32([ kp2[m.trainIdx].pt for m in matches]).reshape(-1,1,2)
 
-    
-    src_pts = np.int32([ kp1[m.queryIdx].pt for m in good ]).reshape(-1,1,2)
-    dst_pts = np.int32([ kp2[m.trainIdx].pt for m in good ]).reshape(-1,1,2)
-    
     M, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC)
-    
-    
     height, width, channels = image2.shape
-    #print(height, width)
     im1_reg = cv2.warpPerspective(image, M, (width, height))
-     
+
     #Convert and display
     update_new(im1_reg)
-    # disp_img = convert_img(im1_reg)
-    # new.image = disp_img
-    # updated_new = new.create_image(0, 0, image=disp_img, anchor="nw")
-    # new.config(height=image2.shape[0], width=image2.shape[1])
-    # new.itemconfig(updated_new)
-    
+
     #Convert and display
     update_img1auto(res)
-    # disp_img = convert_img(res)
-    # new.image = disp_img
-    # updated_new = new.create_image(0, 0, image=disp_img, anchor="nw")
-    # new.config(height=image2.shape[0], width=image2.shape[1])
-    # new.itemconfig(updated_new)
-   
- 
+    update_img2auto(res2)
+
+
+
 def reg_manual(event):
     global image, imj1, new, g_x, g_y, g_x2, g_y2
-      
+
     #Requires two images
     if not are_images():
         return
@@ -436,27 +420,13 @@ def reg_manual(event):
         return
     if len(g_x2)< 4:
         showinfo("Alert", "You need to select 4 points on Image 2")
-    
+
     srcQuad = np.float32([list(xy) for xy in zip(g_x, g_y)])
     dstQuad = np.float32([list(x2y2) for x2y2 in zip(g_x2, g_y2)])
     warp_mat = cv2.getPerspectiveTransform(srcQuad, dstQuad)
     res = cv2.warpPerspective(image, warp_mat, (image.shape[1], image.shape[0]))
 
 
-    '''gray = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
-    gray2 = np.float32(gray)
-    dst = cv2.cornerHarris(gray2,2,3,0.04)
-
-    res = image.copy()
-    res[dst>0.01*dst.max()]=[0,0,255]
-    kp1 = np.argwhere(dst > 0.01 * dst.max())
-    kp1 = kp1.astype("float32")
-    kp1 = [cv2.KeyPoint(x[1], x[0], 4) for x in kp1]
-        
-    sift = cv2.SIFT_create()
-    dcp1 = sift.compute(gray, kp1)'''
-        
-     
     #Convert and display
     update_new(res)
     # disp_img = convert_img(res)
@@ -464,9 +434,9 @@ def reg_manual(event):
     # updated_new = new.create_image(0, 0, image=disp_img, anchor="nw")
     # new.config(height=image2.shape[0], width=image2.shape[1])
     # new.itemconfig(updated_new)
-   
-    
-    
+
+
+
 ##---------------------------------------------------------------------------##
 def main():
     global root, img1, img2, new, image, image2, new
@@ -479,21 +449,21 @@ def main():
 
     root = Tk()
     root.title("Image Registration.")
-    
+
     #setting up a tkinter canvas
     img1 = Canvas(root, width=100, height=100)
     img1.create_image(0, 0, image=None, anchor="nw")
     img1.pack(side="left", padx=10, pady=10)
-      
+
     img2 = Canvas(root, width=100, height=100)
     img2.create_image(0, 0, image=None, anchor="nw")
     img2.pack(side="left", padx=10, pady=10)
-    
+
     new = Canvas(root, width=100, height=100)
     new.create_image(0, 0, image=None, anchor="nw")
     new.pack(side="right", padx=10, pady=10)
-    
-    
+
+
     #mouseclick event
     img1.bind("<Button 1>",setpoint1)
     img2.bind("<Button 1>",setpoint2)
@@ -527,7 +497,7 @@ def main():
     )
     btn_select_pts_img1.grid(row = 0, column = 2)
     btn_select_pts_img1.bind('<ButtonRelease-1>', select_points1)
-  
+
     # Button for select points on image 2
     btn_select_pts_img2 = Button(
         master = frame,
@@ -535,7 +505,7 @@ def main():
     )
     btn_select_pts_img2.grid(row = 2, column = 2)
     btn_select_pts_img2.bind('<ButtonRelease-1>',  select_points2 )
-     
+
     # Button for reset
     btn_save = Button(
         master = frame,
@@ -544,7 +514,7 @@ def main():
     )
     btn_save.grid(row = 3, column = 1)
     btn_save.bind('<ButtonRelease-1>', reset)
-    
+
     # Button for Auto Align
     btn_reg_auto = Button(
         master = frame,
@@ -553,7 +523,7 @@ def main():
     )
     btn_reg_auto.grid(row = 4, column = 2)
     btn_reg_auto.bind('<ButtonRelease-1>', reg_automatic)
-    
+
     # Button for Manual Align
     btn_reg_man = Button(
         master = frame,
@@ -561,7 +531,7 @@ def main():
     )
     btn_reg_man.grid(row = 4, column = 1)
     btn_reg_man.bind('<ButtonRelease-1>', reg_manual)
-    
+
     # Button for save_img image
     btn_save = Button(
         master = frame,
@@ -570,7 +540,7 @@ def main():
     )
     btn_save.grid(row = 6, column = 2)
     btn_save.bind('<ButtonRelease-1>', save_img)
-    
+
     # Button for print points
     btn_printpts = Button(
         master = frame,
@@ -591,10 +561,10 @@ def main():
     root.bind("<a>", reg_automatic)
     root.bind("<A>", reg_automatic)
 
-    
-   
-    
-    
+
+
+
+
 
     root.mainloop() # Start the GUI
 
