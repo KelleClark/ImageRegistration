@@ -371,8 +371,8 @@ def get_matches(decp1, decp2):
 # Print the current manually selected points
 def print_points(event):
     global g_x, g_y, g_x2, g_y2
-    print(g_x,g_y)
-    print(g_x2,g_y2)
+    print(list(zip(g_x,g_y)))
+    print(list(zip(g_x2,g_y2)))
 
 #Partially from
 #https://opencv-python-tutroals.readthedocs.io/en/latest/py_tutorials
