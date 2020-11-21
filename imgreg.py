@@ -195,7 +195,7 @@ def update_new(img):
     new.itemconfig(updated_new)
 
 
-# Check if the first image is loaded
+# Check if images are loaded, required for registration
 def are_images():
     global img, second_img
      
@@ -213,6 +213,7 @@ def are_images():
     else:
         return True
 
+# Check if image 1 is loaded, required for select points image 1
 def is_image():
     global img
 
@@ -221,6 +222,7 @@ def is_image():
         return False
     return True
 
+# Check if image 2 is loaded, required for select points image 2
 def is_image2():
     global second_img
  
@@ -231,7 +233,8 @@ def is_image2():
     
 ##---------Pixel Transformations---------------------------------------------##
 
-# point1
+# when select points image 1 button pressed, starts collecting points
+# from mouse clicks on img1
 def setpoint1(event):
     global image, g_x, g_y, img1, select_pnt1
     
@@ -247,12 +250,13 @@ def setpoint1(event):
         if len(g_x) < 4:
             g_x.append(x1)
             g_y.append(y1)
-            img1.create_oval(x1-10, y1-10, x1+10, y1+10, outline="red", 
+            img1.create_oval(x1-5, y1-5, x1+5, y1+5, outline="red", 
                              tags="point1")
         else:
-            print("warning and don't save")
+            showinfo("Alert", "Four points have been set. Press Reset to begin again.")
         
-
+# When button for select points image 1 is pressed, instructions given and
+# flag set to receive mouse clicks on img1
 def select_points1(event):
     global select_pnt1
     
@@ -263,7 +267,8 @@ def select_points1(event):
                  "Use mouse to click at least 4 pts in Image 1 that you wish to use.")
         select_pnt1 = True
 
-# point2
+# when select points image 2 button pressed, starts collecting points
+# from mouse clicks on img2
 def setpoint2(event):
     global image, g_x2, g_y2, img2, select_pnt2
    
@@ -279,11 +284,13 @@ def setpoint2(event):
         if len(g_x2) < 4:
             g_x2.append(x2)
             g_y2.append(y2)
-            img2.create_oval(x2-10, y2-10, x2+10, y2+10, outline="red",
+            img2.create_oval(x2-5, y2-5, x2+5, y2+5, outline="red",
                              tags="point2")
         else:
-            print("warning and don't save")
+            showinfo("Alert", "Four points have been set. Press Reset to begin again.")
 
+# When button for select points image 2 is pressed, instructions given and
+# flag set to receive mouse clicks on img2
 def select_points2(event):
     global select_pnt2
     
@@ -291,7 +298,7 @@ def select_points2(event):
         return False
     else: 
         showinfo("To Begin",
-                 "Use mouse to click at least 4 points in Image 2 that you wish to use.")
+                 "Use mouse to click on 4 points in Image 2 that you wish to use.")
         select_pnt2 = True
 
 # Reset the manual points that have been selected  
@@ -364,7 +371,7 @@ def reg_automatic(event):
     
     
     height, width, channels = image2.shape
-    print(height, width)
+    #print(height, width)
     im1_reg = cv2.warpPerspective(image, M, (width, height))
      
     #Convert and display
@@ -377,11 +384,17 @@ def reg_automatic(event):
 def reg_manual(event):
     global image, imj1, new, g_x, g_y, g_x2, g_y2
       
-     #Requires two images
+    #Requires two images
     if not are_images():
         return
     
-    gray = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
+    srcQuad = np.float32([list(xy) for xy in zip(g_x, g_y)])
+    dstQuad = np.float32([list(x2y2) for x2y2 in zip(g_x2, g_y2)])
+    warp_mat = cv2.getPerspectiveTransform(srcQuad, dstQuad)
+    res = cv2.warpPerspective(image, warp_mat, (image.shape[1], image.shape[0]))
+
+
+    '''gray = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
     gray2 = np.float32(gray)
     dst = cv2.cornerHarris(gray2,2,3,0.04)
 
@@ -392,9 +405,8 @@ def reg_manual(event):
     kp1 = [cv2.KeyPoint(x[1], x[0], 4) for x in kp1]
         
     sift = cv2.SIFT_create()
-    dcp1 = sift.compute(gray, kp1)
+    dcp1 = sift.compute(gray, kp1)'''
         
-    #img 2?
      
     #Convert and display
     disp_img = convert_img(res)
@@ -402,6 +414,8 @@ def reg_manual(event):
     updated_new = new.create_image(0, 0, image=disp_img, anchor="nw")
     new.config(height=image2.shape[0], width=image2.shape[1])
     new.itemconfig(updated_new)
+   
+    
     
 ##---------------------------------------------------------------------------##
 def main():
