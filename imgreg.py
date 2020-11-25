@@ -42,7 +42,8 @@ g_y2 = []
 def get_args():
     parser = argparse.ArgumentParser(description='Image Registration v1.0')
     parser.add_argument('-- ', default=" ",
-                        help='A Graphical User Interface with no arguments.')
+                        help='A Graphical User Interface with no arguments.'+
+                        '\nA target image and a source image are used in alignment.')
     args = parser.parse_args()
     return(args)
 
@@ -355,7 +356,8 @@ def get_corners(img):
 
     res = img.copy()
     res[dst>0.01*dst.max()]=[0,0,255]
-
+    
+    #identify key points
     kp = np.argwhere(dst > 0.01 * dst.max())
     kp = kp.astype("float32")
     kp = [cv2.KeyPoint(x[1], x[0], 4) for x in kp]
@@ -448,7 +450,7 @@ def main():
         sys.exit(0)
 
     root = Tk()
-    root.title("Image Registration.")
+    root.title("Image Registration. You will need to load two Images. Img 1 is the target")
 
     #setting up a tkinter canvas
     img1 = Canvas(root, width=100, height=100)
